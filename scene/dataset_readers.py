@@ -27,6 +27,8 @@ import torch
 from utils.general_utils import fps
 from multiprocessing.pool import ThreadPool
 import imagesize
+from scene.hyper_loader import Load_hyper_data, format_hyper_data
+import copy
 
 class CameraInfo(NamedTuple):
     uid: int
@@ -390,7 +392,35 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png", num_pt
                            ply_path=ply_path)
     return scene_info
 
+def readHyperDataInfos(datadir,use_bg_points,eval):
+    train_cam_infos = Load_hyper_data(datadir,0.5,use_bg_points,split ="train")
+    test_cam_infos = Load_hyper_data(datadir,0.5,use_bg_points,split="test")
+    print("load finished")
+    train_cam = format_hyper_data(train_cam_infos,"train")
+
+    print("format finished")
+    video_cam_infos = copy.deepcopy(test_cam_infos)
+    video_cam_infos.split="video"
+
+
+    ply_path = os.path.join(datadir, "points3D_downsample2.ply")
+    pcd = fetchPly(ply_path)
+    xyz = np.array(pcd.points)
+
+    pcd = pcd._replace(points=xyz)
+    nerf_normalization = getNerfppNorm(train_cam)
+    # plot_camera_orientations(train_cam_infos, pcd.points)
+    scene_info = SceneInfo(point_cloud=pcd,
+                           train_cameras=train_cam_infos,
+                           test_cameras=test_cam_infos,
+                           nerf_normalization=nerf_normalization,
+                           ply_path=ply_path,
+                           )
+
+    return scene_info
+
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
-    "Blender" : readNerfSyntheticInfo
+    "Blender" : readNerfSyntheticInfo,
+    "nerfies": readHyperDataInfos,  # NeRFies & HyperNeRF dataset proposed by [https://github.com/google/hypernerf/releases/tag/v0.1]
 }

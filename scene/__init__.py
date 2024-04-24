@@ -16,6 +16,7 @@ import json
 from utils.system_utils import searchForMaxIteration
 from scene.dataset_readers import sceneLoadTypeCallbacks
 from scene.gaussian_model import GaussianModel
+from scene.dataset import FourDGSdataset
 from arguments import ModelParams
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 from utils.data_utils import CameraDataset
@@ -45,6 +46,12 @@ class Scene:
 
         if os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval, num_pts_ratio=num_pts_ratio)
+        elif os.path.exists(os.path.join(args.source_path, "dataset.json")):
+            scene_info = sceneLoadTypeCallbacks["nerfies"](args.source_path, False, args.eval)
+            self.train_cameras = FourDGSdataset(scene_info.train_cameras, args)
+            self.test_cameras = FourDGSdataset(scene_info.test_cameras, args)
+
+            # dataset_type="nerfies"
         elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
             print("Found transforms_train.json file, assuming Blender data set!")
             scene_info = sceneLoadTypeCallbacks["Blender"](args.source_path, args.white_background, args.eval, num_pts=num_pts, time_duration=time_duration, extension=args.extension, num_extra_pts=args.num_extra_pts, frame_ratio=args.frame_ratio, dataloader=args.dataloader)
@@ -65,17 +72,17 @@ class Scene:
             with open(os.path.join(self.model_path, "cameras.json"), 'w') as file:
                 json.dump(json_cams, file)
 
-        if shuffle:
-            random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
-            random.shuffle(scene_info.test_cameras)  # Multi-res consistent random shuffling
+        # if shuffle:
+        #     random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
+        #     random.shuffle(scene_info.test_cameras)  # Multi-res consistent random shuffling
 
         self.cameras_extent = scene_info.nerf_normalization["radius"]
 
-        for resolution_scale in resolution_scales:
-            print("Loading Training Cameras")
-            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
-            print("Loading Test Cameras")
-            self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args)
+        # for resolution_scale in resolution_scales:
+        #     print("Loading Training Cameras")
+        #     self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
+        #     print("Loading Test Cameras")
+        #     self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args)
             
         if args.loaded_pth:
             self.gaussians.create_from_pth(args.loaded_pth, self.cameras_extent)
@@ -92,7 +99,7 @@ class Scene:
         torch.save((self.gaussians.capture(), iteration), self.model_path + "/chkpnt" + str(iteration) + ".pth")
 
     def getTrainCameras(self, scale=1.0):
-        return CameraDataset(self.train_cameras[scale].copy(), self.white_background)
+        return self.train_cameras
         
     def getTestCameras(self, scale=1.0):
-        return CameraDataset(self.test_cameras[scale].copy(), self.white_background)
+        return self.test_cameras

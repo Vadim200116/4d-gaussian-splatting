@@ -101,8 +101,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             batch_radii = []
             
             for batch_idx in range(batch_size):
-                gt_image, viewpoint_cam = batch_data[batch_idx]
-                gt_image = gt_image.cuda()
+                viewpoint_cam = batch_data[batch_idx]
+                gt_image = viewpoint_cam.image.cuda()
                 viewpoint_cam = viewpoint_cam.cuda()
 
                 render_pkg = render(viewpoint_cam, gaussians, pipe, background)
@@ -309,8 +309,8 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
                 ssim_test = 0.0
                 msssim_test = 0.0
                 for idx, batch_data in enumerate(tqdm(config['cameras'])):
-                    gt_image, viewpoint = batch_data
-                    gt_image = gt_image.cuda()
+                    viewpoint = batch_data
+                    gt_image = viewpoint.image.cuda()
                     viewpoint = viewpoint.cuda()
                     
                     render_pkg = renderFunc(viewpoint, scene.gaussians, *renderArgs)
