@@ -39,7 +39,8 @@ class Camera:
         self.image = image
         self.gt_alpha_mask = gt_alpha_mask
         self.meta_only = meta_only
-        self.image[:, mask == 0] = 1
+        if mask is not None:
+            self.image[:, mask == 0] = 1
         
         try:
             self.data_device = torch.device(data_device)
