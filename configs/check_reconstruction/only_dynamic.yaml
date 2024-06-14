@@ -21,6 +21,7 @@ ModelParams:
   loaded_pth: ""
   frame_ratio: 1
   dataloader: False
+  masked: True
 
 PipelineParams:
   convert_SHs_python: False
