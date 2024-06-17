@@ -11,7 +11,7 @@ ModelParams:
   sh_degree: 3
   source_path: "/data/check_recosntruction/room_with_person/dynamic"
   model_path: "/data/output/4d-gaussian-splatting/eval_recosntruction/room_with_person_dynamic"
-  images: "images"
+  images: "masked_images"
   resolution: 2
   white_background: True
   data_device: "cuda"
