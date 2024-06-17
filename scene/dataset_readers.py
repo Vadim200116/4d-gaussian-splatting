@@ -28,6 +28,9 @@ from utils.general_utils import fps
 from multiprocessing.pool import ThreadPool
 import imagesize
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 class CameraInfo(NamedTuple):
     uid: int
     R: np.array
